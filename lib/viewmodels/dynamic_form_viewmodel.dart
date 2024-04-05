@@ -46,11 +46,7 @@ class DynamicFormViewModel extends ChangeNotifier {
   //   await Directory(folderPath).create(recursive: true);
   //   late Uint8List imageByte;
 
-  //   // final awsS3 = AmazonS3Cognito.upload('assignments-list',
-  //   //   region: 'ap-south-1',
-  //   //   accessKey: 'AKIARUYJYFCSRJUWGKQY',
-  //   //   secretKey: '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',
-  //   // );
+  
   //   for (var image in _capturedImages) {
   //     final newPath = '$folderPath/${image.path.split('/').last}';
   //     await image.copy(newPath);
@@ -63,17 +59,7 @@ class DynamicFormViewModel extends ChangeNotifier {
   //     final key = image.path.split('/').last;
   //     print('Image uploaded to S3: $key');
   //   }
-  //   AWSWebClient.uploadFile(
-  //     s3UploadUrl: 'https://assignments-list.s3.ap-south-1.amazonaws.com/',
-  //     s3SecretKey: '06O0TxyHnFVxCXypeLLRCW5i1OxFm4XPOlz6560D',
-  //     s3Region: 'ap-south-1',
-  //     s3AccessKey: 'AKIARUYJYFCSRJUWGKQY',
-  //     s3BucketName: 'assignments-list',
-  //     folderName: 'images',
-  //     fileName: 'imagedata01.png',
-  //     fileBytes:
-  //         imageByte, //your file bytes Note: it will take file as byte so you have to convert file into byte
-  //   );
+ 
 
   //   // _capturedImages.clear();
   // }
