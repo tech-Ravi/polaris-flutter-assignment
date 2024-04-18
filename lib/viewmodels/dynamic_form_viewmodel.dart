@@ -33,6 +33,66 @@ class DynamicFormViewModel extends ChangeNotifier {
     await saveFormDataLocally(formData);
   }
 
+//For Edit Text
+  String _inputTextData = '';
+  String _inputIntData = '';
+  String get inputTextData => _inputTextData;
+  String get inputIntData => _inputIntData;
+
+  void setInputTextData(String data) {
+    _inputTextData = data;
+    notifyListeners();
+  }
+
+  void setInputIntData(String data) {
+    _inputIntData = data;
+    notifyListeners();
+  }
+
+//For checkbox
+  final List<String> _checkBoxData = [];
+
+  String get checkBoxData => _checkBoxData.toString();
+
+  void addDataToList(String value) {
+    _checkBoxData.add(value);
+    print(_checkBoxData);
+    notifyListeners();
+  }
+
+  void removeDataToList(String value) {
+    _checkBoxData.remove(value);
+    print(_checkBoxData);
+    notifyListeners();
+  }
+
+  //For Dropdown Value
+  String _selectedData1 = '';
+  String _selectedData2 = '';
+  String get selectedData1 => _selectedData1;
+  String get selectedData2 => _selectedData2;
+
+  void setSelectedData1(String data) {
+    _selectedData1 = data;
+    notifyListeners();
+  }
+
+  void setSelectedData2(String data) {
+    _selectedData2 = data;
+    notifyListeners();
+  }
+
+  //For RadioButton Value
+  String _selectedOpt = '';
+  String get selectedOpt => _selectedOpt;
+
+  void setSelectedOpt(String data) {
+    _selectedOpt = data;
+    notifyListeners();
+  }
+
+  //For Captured Image
+
   // Future<void> pushDataToCloudMethod() async {
   //   final formDataList =
   //       _formDataList.map((formModel) => formModel.toJson()).toList();
@@ -46,7 +106,6 @@ class DynamicFormViewModel extends ChangeNotifier {
   //   await Directory(folderPath).create(recursive: true);
   //   late Uint8List imageByte;
 
-  
   //   for (var image in _capturedImages) {
   //     final newPath = '$folderPath/${image.path.split('/').last}';
   //     await image.copy(newPath);
@@ -59,7 +118,6 @@ class DynamicFormViewModel extends ChangeNotifier {
   //     final key = image.path.split('/').last;
   //     print('Image uploaded to S3: $key');
   //   }
- 
 
   //   // _capturedImages.clear();
   // }
@@ -81,9 +139,6 @@ class DynamicFormViewModel extends ChangeNotifier {
   //   );
   // }
 
-
-
-  
   // Future<void> submitForm() async {
   //   // Submit the form data to the API or perform any other necessary actions
   //   for (FormModel model in _formDataList) {

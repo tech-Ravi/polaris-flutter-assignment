@@ -6,8 +6,8 @@ import 'viewmodels/dynamic_form_viewmodel.dart';
 import 'views/dynamic_form_screen.dart';
 
 void main() {
-  initDB();
   WidgetsFlutterBinding.ensureInitialized();
+  initDB();
   runApp(MyApp());
 }
 
@@ -18,14 +18,14 @@ initDB() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => DynamicFormViewModel(),
-      child: MaterialApp(
-        title: 'Dynamic Form',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: DynamicFormScreen(),
+    return MaterialApp(
+      home: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) => DynamicFormViewModel(),
+          ),
+        ],
+        child: DynamicFormScreen(),
       ),
     );
   }

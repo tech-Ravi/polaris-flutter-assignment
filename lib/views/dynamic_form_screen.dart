@@ -34,20 +34,25 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
   late Future<FormModel> _formDataFuture;
   final Map<String, dynamic> _formData = {};
   Map<String, dynamic> userInputData = {};
-  final _textController1 = TextEditingController();
-  final _textController2 = TextEditingController();
-  final _textControllerDropdown1 = TextEditingController();
-  final _textControllerDropdown2 = TextEditingController();
+  String strEditTextString = '',
+      strEditTextIn = '',
+      strDropdownData1 = '',
+      strDropdownData2 = '',
+      strRadioGroupData = '',
+      strCheckboxData = '';
+/*   print(viewModel.inputIntData);
+                            print(viewModel.inputTextData);
+                            print(viewModel.selectedData1);
+                            print(viewModel.selectedData2);
+                            print(viewModel.selectedOpt);
+                            print(viewModel.checkBoxData);*/
   String strSavedTableName = '';
 
   @override
   void initState() {
     super.initState();
     final viewModel = context.read<DynamicFormViewModel>();
-    // viewModel.handleConnectivityAndDataPush(onConnected: () {  });
     _formDataFuture = viewModel.fetchFormData();
-
-    //handleConnectivityAndDataPush();
   }
 
   void _addFormFieldData(String label, dynamic value) {
@@ -84,23 +89,20 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
     for (Field field in form.fields) {
       // Assume the field label is unique within the form
       String label = field.metaInfo.label;
+      //String strEditTextString = '',strEditTextIn='',strDropdownData1='',strDropdownData2='',
+      //strRadioGroupData='',strCheckboxData='';
       String strEditTextType = '', strDropdownTextType = '';
-      if (label == "Consumer Name") strEditTextType = _textController1.text;
-      if (label == "Consumer Mobile Number")
-        strEditTextType = _textController2.text;
+      if (label == "Consumer Name") strEditTextType = strEditTextString;
+      if (label == "Consumer Mobile Number") strEditTextType = strEditTextIn;
 
-      if (label == "Meter Status")
-        strDropdownTextType = _textControllerDropdown1.text;
+      if (label == "Meter Status") strDropdownTextType = strDropdownData1;
       if (label == "Meter Validation Status")
-        strDropdownTextType = _textControllerDropdown2.text;
+        strDropdownTextType = strDropdownData2;
       // Get user input value based on the component type
       dynamic userInputValue;
       switch (field.componentType) {
         case 'EditText':
-          print("Print Data:- " +
-              _textController1.text +
-              "   " +
-              strEditTextType.toString());
+          print("Print Data:- " + strEditTextType.toString());
           userInputValue = strEditTextType;
           break;
         case 'DropDown':
@@ -109,13 +111,13 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
           break;
         case 'CheckBoxes':
           print("Print Data:- " + "   " + label);
-          userInputValue = 'OK'; // Default to false if not selected
+          userInputValue = strCheckboxData; // Default to false if not selected
           break;
 
         case 'RadioGroup':
           print("Print Data:- " + "   " + label);
           userInputValue =
-              userInputData[label]; // Default to false if not selected
+              strRadioGroupData; // Default to false if not selected
           break;
 
         case 'CaptureImages':
@@ -132,7 +134,10 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
     }
     print("Data to Save:-");
     print(userInputData);
-    await saveFormDataToDatabase(form, userInputData, context);
+    //await saveFormDataToDatabase(form, userInputData, context);
+    await ApiService().pushDataToCloud(userInputData, context, form).onError(
+        (error, stackTrace) async =>
+            {await saveFormDataToDatabase(form, userInputData, context)});
 
     return userInputData;
   }
@@ -163,93 +168,94 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
           if (snapshot.hasData) {
             final formModel = snapshot.data!;
             strSavedTableName = formModel.formName;
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    formModel.formName,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+            return Consumer<DynamicFormViewModel>(
+              builder: (context, viewModel, child) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      formModel.formName,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: formModel.fields.length,
-                      physics: BouncingScrollPhysics(),
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      itemBuilder: (context, index) {
-                        final field = formModel.fields[index];
-                        switch (field.componentType) {
-                          case 'EditText':
-                            return EditTextComponent(
-                              metaInfo: field.metaInfo,
-                              controller:
-                                  field.metaInfo.componentInputType == 'INTEGER'
-                                      ? _textController2
-                                      : _textController1,
-                              onTextChanged: (String str) {
-                                field.metaInfo.componentInputType == 'INTEGER'
-                                    ? _textController2.text = str
-                                    : _textController1.text = str;
-                              },
-                            );
-                          case 'CheckBoxes':
-                            return CheckBoxesComponent(
-                              metaInfo: field.metaInfo,
-                            );
-                          case 'DropDown':
-                            return DropDownComponent(
-                              metaInfo: field.metaInfo,
-                              controller: field.metaInfo.componentInputType ==
-                                      'Meter Status'
-                                  ? _textControllerDropdown1
-                                  : _textControllerDropdown2,
-                              onValueChanged: (String str) {
-                                field.metaInfo.componentInputType ==
-                                        'Meter Status'
-                                    ? _textControllerDropdown1.text = str
-                                    : _textControllerDropdown2.text = str;
-                              },
-                            );
-                          case 'CaptureImages':
-                            return CaptureImagesComponent(
-                              metaInfo: field.metaInfo,
-                            );
-                          case 'RadioGroup':
-                            return RadioGroupComponent(
-                              metaInfo: field.metaInfo,
-                            );
-                          default:
-                            return SizedBox.shrink();
-                        }
-                      },
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      SaveButton(
-                        onPressed: () async {
-                          await captureUserInputData(formModel, context);
+                    Expanded(child: DynamicItemWidget(formModel)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // SaveButton(
+                        //   onPressed: () async {
+                        //     //print(field.metaInfo.componentInputType =='INTEGER'?viewModel.inputIntData:viewModel.inputIntData);
 
-                          // if (userInputData.isNotEmpty)
-                        },
-                      ),
-                      SizedBox(width: 16),
-                      SubmitButton(
-                        onPressed: () {
-                          //TODO
-                          // final viewModel =
-                          //     context.read<DynamicFormViewModel>();
-                          // viewModel.submitForm();
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                        //     // await captureUserInputData(formModel, context);
+
+                        //   },
+                        // ),
+                        // SizedBox(width: 16),
+                        SubmitButton(
+                          onPressed: () {
+                            // print(viewModel.inputIntData);
+                            // print(viewModel.inputTextData);
+                            // print(viewModel.selectedData1);
+                            // print(viewModel.selectedData2);
+                            // print(viewModel.selectedOpt);
+                            // print(viewModel.checkBoxData);
+                            //String strEditTextString = '',strEditTextIn='',strDropdownData1='',strDropdownData2='',
+                            //strRadioGroupData='',strCheckboxData='';
+                            strEditTextString = viewModel.inputTextData;
+                            strEditTextIn = viewModel.inputIntData;
+                            strDropdownData1 = viewModel.selectedData1;
+                            strDropdownData2 = viewModel.selectedData2;
+                            strRadioGroupData = viewModel.selectedOpt;
+                            strCheckboxData = viewModel.checkBoxData;
+
+                            if (viewModel.inputTextData.isEmpty) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Please fill all the fields!!"),
+                                duration: Durations.long1,
+                              ));
+                            } else if (viewModel.inputIntData.isEmpty) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Please fill all the fields!!"),
+                                duration: Durations.long1,
+                              ));
+                            } else if (viewModel.selectedData1.isEmpty) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Please fill all the fields!!"),
+                                duration: Durations.long1,
+                              ));
+                            } else if (viewModel.selectedData2.isEmpty) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Please fill all the fields!!"),
+                                duration: Durations.long1,
+                              ));
+                            } else if (viewModel.selectedOpt.isEmpty) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Please fill all the fields!!"),
+                                duration: Durations.long1,
+                              ));
+                            } else if (viewModel.checkBoxData.isEmpty) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Please fill all the fields!!"),
+                                duration: Durations.long1,
+                              ));
+                            } else {
+                              captureUserInputData(formModel, context);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           } else if (snapshot.hasError) {
@@ -264,5 +270,46 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
         },
       ),
     );
+  }
+}
+
+Widget DynamicItemWidget(FormModel formModel) {
+  return SingleChildScrollView(
+    physics: const BouncingScrollPhysics(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (int i = 0; i < formModel.fields.length; i++)
+          fetchItemWidget(formModel.fields[i].componentType, formModel, i)
+      ],
+    ),
+  );
+}
+
+Widget fetchItemWidget(String componentType, FormModel formModel, int index) {
+  final field = formModel.fields[index];
+  switch (componentType) {
+    case 'EditText':
+      return EditTextComponent(
+        metaInfo: field.metaInfo,
+      );
+    case 'CheckBoxes':
+      return CheckBoxesComponent(
+        metaInfo: field.metaInfo,
+      );
+    case 'DropDown':
+      return DropDownComponent(
+        metaInfo: field.metaInfo,
+      );
+    case 'CaptureImages':
+      return CaptureImagesComponent(
+        metaInfo: field.metaInfo,
+      );
+    case 'RadioGroup':
+      return RadioGroupComponent(
+        metaInfo: field.metaInfo,
+      );
+    default:
+      return SizedBox.shrink();
   }
 }
