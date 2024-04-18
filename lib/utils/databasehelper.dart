@@ -52,4 +52,15 @@ class DatabaseHelper {
     }
     return null;
   }
+
+
+  static Future<int> deleteFormData(String formName) async {
+    final db = await database;
+    return await db.delete(
+      'form_data',
+      where: 'form_name = ?',
+      whereArgs: [formName],
+    );
+    
+  }
 }

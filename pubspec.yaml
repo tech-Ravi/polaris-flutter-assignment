@@ -39,11 +39,12 @@ dependencies:
   path_provider: ^2.1.0
   shared_preferences: ^2.2.0
   image_picker: ^1.0.2
-  connectivity_plus: ^5.0.2
+  connectivity_plus: ^5.0.1
   provider: ^6.1.2
   amazon_cognito_identity_dart_2: ^3.4.0
   amazon_cognito_upload: ^0.0.5
   sqflite: ^2.3.3
+  internet_connection_checker: ^1.0.0+1
 
 dev_dependencies:
   flutter_test:

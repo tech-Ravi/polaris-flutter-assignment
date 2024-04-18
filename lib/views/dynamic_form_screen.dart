@@ -1,10 +1,14 @@
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_task_polaris/main.dart';
 import 'package:flutter_task_polaris/services/api_service.dart';
-import 'package:flutter_task_polaris/views/components/save_button.dart';
 import 'package:flutter_task_polaris/views/components/submit_button.dart';
 import 'package:flutter_task_polaris/views/form_data_screen.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter/material.dart';
 import '../models/form_model.dart';
 import '../utils/connectivity_utils.dart';
 import '../utils/databasehelper.dart';
@@ -40,20 +44,65 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
       strDropdownData2 = '',
       strRadioGroupData = '',
       strCheckboxData = '';
-/*   print(viewModel.inputIntData);
-                            print(viewModel.inputTextData);
-                            print(viewModel.selectedData1);
-                            print(viewModel.selectedData2);
-                            print(viewModel.selectedOpt);
-                            print(viewModel.checkBoxData);*/
   String strSavedTableName = '';
+
+  late StreamSubscription subscription;
+  bool isDeviceConnected = false;
+  bool isAlertSet = false;
 
   @override
   void initState() {
     super.initState();
     final viewModel = context.read<DynamicFormViewModel>();
     _formDataFuture = viewModel.fetchFormData();
+    getConnectivity(viewModel, _formDataFuture);
   }
+
+  getConnectivity(
+      DynamicFormViewModel viewModel, Future<FormModel> formDataFuture) {
+    _formDataFuture = viewModel.fetchFormData();
+    subscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) async {
+      isDeviceConnected = await InternetConnectionChecker().hasConnection;
+      if (!isDeviceConnected && isAlertSet == false) {
+        //showDialogBox();
+        setState(() => isAlertSet = true);
+      } else {
+        pushingLocallySavedDataToServer();
+        setState(() => isAlertSet = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
+
+  showDialogBox() => showCupertinoDialog<String>(
+        context: context,
+        builder: (BuildContext context) => CupertinoAlertDialog(
+          title: const Text('No Connection'),
+          content: const Text('Please check your internet connectivity'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context, 'Cancel');
+                setState(() => isAlertSet = false);
+                isDeviceConnected =
+                    await InternetConnectionChecker().hasConnection;
+                if (!isDeviceConnected && isAlertSet == false) {
+                  showDialogBox();
+                  setState(() => isAlertSet = true);
+                }
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
 
   void _addFormFieldData(String label, dynamic value) {
     final viewModel = context.read<DynamicFormViewModel>();
@@ -135,11 +184,26 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
     print("Data to Save:-");
     print(userInputData);
     //await saveFormDataToDatabase(form, userInputData, context);
-    await ApiService().pushDataToCloud(userInputData, context, form).onError(
-        (error, stackTrace) async =>
-            {await saveFormDataToDatabase(form, userInputData, context)});
+    var isDeviceConnected = await InternetConnectionChecker().hasConnection;
+
+    if (isDeviceConnected)
+      await ApiService().pushDataToCloud(userInputData, context, form).onError(
+          (error, stackTrace) async =>
+              {await saveFormDataToDatabase(form, userInputData, context)});
+    else {
+      await saveFormDataToDatabase(form, userInputData, context);
+    }
 
     return userInputData;
+  }
+
+  pushingLocallySavedDataToServer() async {
+    var data = await DatabaseHelper.getFormData('Consumer Survey Form') ?? {};
+    print("Internet available:- ${data}");
+
+    if (data.isNotEmpty) {
+      await ApiService().pushDataToCloudWhenDataSavedLocally(data, context);
+    }
   }
 
   @override
@@ -147,9 +211,19 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Dynamic Form'),
+        backgroundColor: isDeviceConnected ? Colors.green : Colors.red,
         actions: [
-          ElevatedButton(
+          IconButton(
+            icon: Icon(
+              (isDeviceConnected) ? Icons.wifi : Icons.wifi_off_rounded,
+              color: Colors.white,
+            ),
             onPressed: () {
+              // do something
+            },
+          ),
+          InkWell(
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -158,7 +232,7 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
                 ),
               );
             },
-            child: Text('See saved Data'),
+            child: Text('See saved data  '),
           ),
         ],
       ),
@@ -260,7 +334,28 @@ class _DynamicFormScreenState extends State<DynamicFormScreen> {
             );
           } else if (snapshot.hasError) {
             return Center(
-              child: Text('Error: ${snapshot.error}'),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: ${snapshot.error}'),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (BuildContext context) => MyApp()));
+                    },
+                    child: Text(
+                      'Refresh',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  )
+                ],
+              ),
             );
           } else {
             return Center(

@@ -91,6 +91,7 @@ class DynamicFormViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  
   //For Captured Image
 
   // Future<void> pushDataToCloudMethod() async {

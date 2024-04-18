@@ -50,6 +50,28 @@ class _FormDataScreenState extends State<FormDataScreen> {
                     // Adjust the UI as per your data structure
                     for (var entry in formData!.entries)
                       Text('${entry.key}: ${entry.value}'),
+
+                    SizedBox(
+                      height: 20,
+                    ),
+                    InkWell(
+                      onTap: () async {
+                        await DatabaseHelper.deleteFormData(
+                                'Consumer Survey Form') ??
+                            {};
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text("Saved data deleted from local DB!"),
+                        ));
+                      },
+                      child: Text(
+                        'Clear Local DB',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red),
+                      ),
+                    ),
                   ],
                 )
               : CircularProgressIndicator(), // Show loading indicator while fetching data
